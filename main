@@ -1,0 +1,409 @@
+import asyncio
+import os
+import random
+from asyncio import events
+from pyrogram import Client
+from pyrogram.errors import BadRequest, Flood, Forbidden
+from pyrogram.methods.utilities import compose
+from datetime import datetime
+
+# test proxies through requests lib (no timeouts?)
+# проверка на спамблок
+
+
+#----------------------------------------------------------- add proxies ------- how to make faster?
+# 1 - to turn on proxy, -1 to turn off 
+ProxiesSwitch = 1
+
+proxy1 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+proxy2 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+proxy3 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+proxy4 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+
+proxy5 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+proxy6 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+proxy7 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+proxy8 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+
+proxy9 = {"scheme": "socks5",    "hostname": "",     "port": 9800,   "username": "",   "password": ""}
+
+#------------------------------- Functions ------------------------------------------------
+#*** Add contacts  =    1   ******
+#*** Send Voice  =    2     ******
+#*** Inviting = 3  
+# ******  send msg - 4 
+
+Function = 2
+
+#----Add contacts pause between actions (q - from , w - to(sec)) 
+q = 8
+w = 12
+
+#----Send voice / msg  pause between actions (j - from, k - to(sec))
+j = 47
+k = 58
+
+
+#----Params for send Voice 
+VoiceSchedule = 2  # 1 - to switch on , 2 - switch off 
+DisNotif = False  # True to send without sound
+
+year = 2023
+month = 11
+day = 22
+hour = 15
+    #----mins t -from, y - to 
+t = 20
+y = 29
+
+#--------- mins u - from   o - to Inviting params
+u= 5
+o= 8
+
+iChat = "" #----- chat to invite to 
+#--------------------------------------- Voice ---------------------------------------
+
+Var_1 = "./audio_1.ogg"
+Var_2 = "./audio_2.ogg"
+Var_3 = "./audio_3.ogg"
+
+#-------------------------------- Sessions -------------------------------------------
+files = os.listdir("./")
+session_files = [file for file in files if file.endswith(".session")]
+
+apps = []
+
+for session_file in session_files:
+    client_name = session_file[:-8]
+    apps.append(Client(client_name))
+
+#------------------------------------------------------------------------------------
+
+async def Add(UsersFile ,app ,appIndex):
+
+        for user in UsersFile:
+            pause_add = random.randint(q,w)
+            try:  
+
+                await asyncio.sleep(pause_add)
+                await app.add_contact( user , user)
+                #await app.import_contacts([InputPhoneContact(item,item)])
+                print(app.name,f" ----- Добавил контакт {appIndex} ----- ", user)
+
+            except Flood as wait_err:
+                print(app.name,f" ----- (Flood) {appIndex} Флуд ----- {wait_err.value} ")
+                await asyncio.sleep(wait_err.value)
+
+            except TimeoutError:
+                print(appIndex," Timeout ---")
+                continue 
+
+            except Forbidden:
+                print(app.name,f" ----- (Forbidden) {appIndex} Такого пользователя нет ----- ", user)
+                continue  
+
+            except BadRequest:
+                print(app.name,f" ----- (BadRequest) {appIndex} Такого пользователя нет ----- ", user)
+                continue
+
+#---------------------------------------------------------------------------------------------------- 
+
+async def Send(UsersFile ,app ,appIndex,):
+
+        file = open(f"./Recivrs/main/{appIndex}.txt", "r")
+        file_copy = open(f"./Recivrs/copy/{appIndex}-copy.txt", "w")
+
+        with file as f:
+            lines = f.readlines()
+
+        with file_copy as f:
+            for line in lines:
+                f.write(line)
+
+        count = 0        
+
+        for user in UsersFile:
+
+            randomMsg = random.randint(1,3)
+
+            if randomMsg == 1:
+                Voice = Var_1
+
+            elif randomMsg == 2:
+                Voice = Var_2
+
+            elif randomMsg == 3:
+                Voice = Var_3   
+
+            pause_send = random.randint(j,k)
+
+            min = random.randint(t,y) #------- minutes ------
+            count += 1
+            try:
+
+                await asyncio.sleep(pause_send)
+                
+                if VoiceSchedule == 1:
+                    await app.send_voice( user , Voice ,disable_notification = DisNotif ,schedule_date = datetime(year = year ,month = month , day = day , hour = hour , minute= min ,))
+
+                elif VoiceSchedule == 2:
+                    await app.send_voice( user , Voice ,disable_notification = DisNotif)
+
+                else:
+                    print("Некоректный выбор метода")
+                    exit()
+
+                print(app.name,f" ----- отправлено сообщение {appIndex} ----- ", user)
+
+                file_write = open(f"./Recivrs/main/{appIndex}.txt", "w")
+                with file_write as e:
+
+                    End = len(lines)
+                    Dict = lines[count:End]
+
+                    for i in Dict[:]:
+                        e.write(i)
+
+            except Flood as wait_err:
+                print(app.name,f" ----- (Flood) {appIndex} Флуд ----- {wait_err.value} ")
+                await asyncio.sleep(wait_err.value)
+
+            except TimeoutError:
+                continue 
+
+            except Forbidden:
+                print(app.name,f" ----- (Forbidden) {appIndex} Такого пользователя нет ----- ", user)
+                file_write = open(f"./Recivrs/main/{appIndex}.txt", "w")
+                with file_write as e:
+
+                    End = len(lines)
+                    Dict = lines[count:End]
+
+                    for i in Dict[:]:
+                        e.write(i)
+                continue  
+
+            except BadRequest:
+                print(app.name,f" ----- (BadRequest) {appIndex} Такого пользователя нет ----- ", user)
+                file_write = open(f"./Recivrs/main/{appIndex}.txt", "w")
+                with file_write as e:
+
+                    End = len(lines)
+                    Dict = lines[count:End]
+
+                    for i in Dict[:]:
+                        e.write(i)
+                continue     
+# --------------------------------------------------------------------------------------   
+
+async def TextSend(UsersFile ,app ,appIndex,):
+
+        file = open(f"./Recivrs/main/{appIndex}.txt", "r")
+        file_copy = open(f"./Recivrs/copy/{appIndex}-copy.txt", "w")
+
+        with file as f:
+            lines = f.readlines()
+
+        with file_copy as f:
+            for line in lines:
+                f.write(line)
+
+        count = 0        
+
+        for user in UsersFile:
+
+
+            Text = random.choice(["Здравствуйте.","Приветствую.","Добрый день.","Доброго времени суток.","Привет."])+\
+            random.choice([" Мы с коллегами помогаем подобрать"," Наша кoманда помогает выбрaть"," Наши сотрудники пoмoгaют отoбрать"," Мои коллеги помогают подобрать"])+\
+            random.choice([" качественную"," долговечную"," надежную"," фирменную", "добротную", "высококачественную"])+\
+            random.choice(["👍","👌"," ","✊","🤟"])+\
+            random.choice([" напишите “+” Отправлю вам ссылку.", " отправьте + в ответ на это сообщение и отправлю вам наш сайт и контакты."," ответьте + и я отправлю вам ссылку. "])
+
+
+
+            pause_send = random.randint(j,k)
+
+            min = random.randint(t,y) #------- minutes ------
+            count += 1
+            try:
+
+                await asyncio.sleep(pause_send)
+                                
+                await app.send_message( user , Text ,disable_notification = DisNotif ,schedule_date = datetime(year = year ,month = month , day = day , hour = hour , minute= min ,))
+
+                print(app.name,f" ----- отправлено сообщение {appIndex} ----- ", user)
+
+                file_write = open(f"./Recivrs/main/{appIndex}.txt", "w")
+                with file_write as e:
+
+                    End = len(lines)
+                    Dict = lines[count:End]
+
+                    for i in Dict[:]:
+                        e.write(i)
+
+            except Flood as wait_err:
+                print(app.name,f" ----- (Flood) {appIndex} Флуд ----- {wait_err.value} ")
+                await asyncio.sleep(wait_err.value)
+
+            except TimeoutError:
+                continue 
+
+            except Forbidden:
+                print(app.name,f" ----- (Forbidden) {appIndex} Такого пользователя нет ----- ", user)
+                file_write = open(f"./Recivrs/main/{appIndex}.txt", "w")
+                with file_write as e:
+
+                    End = len(lines)
+                    Dict = lines[count:End]
+
+                    for i in Dict[:]:
+                        e.write(i)
+                continue  
+
+            except BadRequest:
+                print(app.name,f" ----- (BadRequest) {appIndex} Такого пользователя нет ----- ", user)
+                file_write = open(f"./Recivrs/main/{appIndex}.txt", "w")
+                with file_write as e:
+
+                    End = len(lines)
+                    Dict = lines[count:End]
+
+                    for i in Dict[:]:
+                        e.write(i)
+                continue     
+
+#-------------------------------------------------------------------------------------
+
+async def Inviting(UsersFile ,app ,appIndex,):
+
+    for user in UsersFile:
+            pause_add = random.randint(u,o)
+            chat_id = iChat
+            try:  
+
+                await asyncio.sleep(pause_add)
+                await app.add_chat_members( chat_id , user)
+                print(app.name,f" ----- Добавил контакт в чат {appIndex} ----- ", user)
+
+            except Flood as wait_err:
+                print(app.name,f" ----- (Flood) {appIndex} Флуд ----- {wait_err.value} ")
+                await asyncio.sleep(wait_err.value)
+
+            except TimeoutError:
+                print(appIndex," Timeout ---")
+                continue 
+
+            except Forbidden:
+                print(app.name,f" ----- (Forbidden) {appIndex} Такого пользователя нет ----- ", user)
+                continue  
+
+            except BadRequest:
+                print(app.name,f" ----- (BadRequest) {appIndex} Такого пользователя нет ----- ", user)
+                continue
+#------------------------------------------------------------------------------------------------------------            
+
+async def main():
+
+        startTime = datetime.now().strftime('%H:%M:%S')
+
+        if Function == 1:
+            print(" ---  Добавление контактов ---")
+            func = Add
+
+        elif Function == 2:
+            print(" ---  Отправка голосовых сообщений ---")
+            func = Send
+
+        elif Function == 3:
+            print(" ---  Инвайтинг ---")
+            func = Inviting   
+
+        elif Function == 4:
+            print(" ---  Текстовое сообщение ---")
+            func = TextSend      
+
+        else:
+            print(" ---  Ошибка в выборе функции --- ")
+            exit()    
+
+        for app in apps:
+            appIndex = apps.index(app)
+            app.app_version = "1.2"
+            app.device_model = "PC 64bit"
+            app.system_version = "Windows 10 Pro"
+
+            if ProxiesSwitch == True:
+                if appIndex <= 2:
+                    app.proxy = proxy1
+
+                elif appIndex <= 5:
+                    app.proxy = proxy2
+
+                elif appIndex <=8:
+                    app.proxy = proxy3
+
+                elif appIndex <=11:
+                    app.proxy = proxy4
+
+                elif appIndex <=14:
+                    app.proxy = proxy5
+
+                elif appIndex <=17:
+                    app.proxy = proxy6
+
+                elif appIndex <=20:
+                    app.proxy = proxy7
+
+                elif appIndex <=23:
+                    app.proxy = proxy8
+
+                elif appIndex <=26:
+                    app.proxy = proxy9
+
+                else:
+                    print(" ---  Недостаточно проксей ---")
+                    exit()
+            else:
+                print(f"\n ---   Ну.... рискни без проксей ---\n")
+                pass         
+
+            await asyncio.sleep(3)
+            await app.start()
+            print("start -- ", app.name ,"--", appIndex)
+
+            tasks = []
+            tasks.append(asyncio.create_task(func(app=app,  appIndex = appIndex, UsersFile=open(f"./Recivrs/main/{appIndex}.txt"))))
+
+        await asyncio.gather(*tasks)    
+
+        print("\n\nstart --- ",startTime,f" --- finish --- {datetime.now().strftime('%H:%M:%S')}\n\n")
+
+        for app in apps:
+            await app.stop() 
+
+        await compose(apps)
+#-------#---------------------------------------------------------   
+        #print("We add contacts let's sleep")     
+        #await asyncio.sleep(15*60) # 15 min spat mezhdu ciklami  
+        #print("Let's send messages")
+#-------#---------------------------------------------------------
+#-------#------ 2 nd Send message --------------------------------
+        #for app in apps:
+        #    appIndex = apps.index(app)
+        #    app.app_version = "2.83"
+        #    app.device_model = "PC 64bit"
+        #    app.system_version = "Windows 10"
+
+        #    tasks = []
+        #    tasks.append(asyncio.create_task(Sender(app=app,  appIndex = appIndex, UsersFile=open(f"./Recivrs/main/{appIndex}.txt"))))
+
+        #await asyncio.gather(*tasks)  
+        #    for app in apps:
+        #        app.stop() 
+
+        #    await compose(apps)
+
+        #print("start --- ",startTime," --- finish --- ",datetime.now().strftime('%H:%M:%S'))
+
+asyncio.get_event_loop().run_until_complete(main())
